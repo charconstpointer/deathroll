@@ -18,7 +18,7 @@ namespace Playground
 
         public async Task MainAsync()
         {
-            const string token = "NzMxOTQwMDYwOTcwMzUyNjYx.Xww8GA.NOedeHmkEqHG3B7Ps2cUzVG8M8I";
+            const string token = "";
             var client = await InitClient(token);
             await Task.Delay(-1);
         }
@@ -39,9 +39,9 @@ namespace Playground
                     var next = Game.Next();
                     foreach (var gamePlayer in Game.Players)
                     {
-                        players.AppendLine(gamePlayer.Id == next.Id
-                            ? $"👉 {gamePlayer.Username}"
-                            : $"⏳ {gamePlayer.Username}");
+                        players.AppendLine(gamePlayer.User.Id == next.User.Id
+                            ? $"👉 {gamePlayer.User.Username}"
+                            : $"⏳ {gamePlayer.User.Username}");
                     }
 
                     await channel.SendMessageAsync(players.ToString());
@@ -53,16 +53,17 @@ namespace Playground
                         return;
                     }
 
-                    Game.AddPlayer(author);
+                    var player = new Player {User = author, Roll = -1};
+                    Game.AddPlayer(player);
                     await channel.SendMessageAsync($"<@{author.Id}> Added");
                 }
                 else if (arg.Content.ToLower().Contains("roll"))
                 {
-                    var (user, roll) = Game.Roll(author);
-                    if (user is null) return;
-                    if (user.Id == author.Id)
+                    var player = Game.Roll(author);
+                    if (player is null) return;
+                    if (player.User.Id == author.Id)
                     {
-                        await channel.SendMessageAsync($"<@{author.Id}> {roll}");
+                        await channel.SendMessageAsync($"<@{author.Id}> {player.Roll}");
                     }
                 }
             }
