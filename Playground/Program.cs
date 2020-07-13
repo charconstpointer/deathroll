@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Playground.Events;
 using Playground.Exceptions;
 
 namespace Playground
@@ -26,6 +27,14 @@ namespace Playground
             var channelId = channel.Id;
             var cc = client.GetChannel(channelId) as IMessageChannel;
             Game.PlayerKicked += async (sender, args) => await cc.SendMessageAsync($"<@{args.Player.User.Id}> lost 🙀");
+
+            async void OnGameOnGameEnded(object? sender, GameEndedEvent args) 
+            {
+                await cc.SendMessageAsync($"<@{args.Winner.User.Id}> is da winna 🎆🎇🎈✨🎉🎊");
+                Game.Restart();
+            }
+
+            Game.GameEnded += OnGameOnGameEnded;
             await Task.Delay(-1);
         }
 

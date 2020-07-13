@@ -24,6 +24,7 @@ namespace Playground
 
         public bool IsStarted { get; private set; }
         public event EventHandler<PlayerKickedEvent> PlayerKicked;
+        public event EventHandler<GameEndedEvent> GameEnded;
 
         public Game()
         {
@@ -49,21 +50,35 @@ namespace Playground
 
             var expected = _players.Peek();
             if (expected.User.Id != user.Id) return null;
-            if (!_players.TryDequeue(out var player)) throw new ApplicationException("No players?");
-
             var roll = _random.Next(Limit);
-            player.Roll = roll;
-            _rolls++;
             if (PlayerCount <= 2)
             {
                 Limit = roll;
+                if (roll == 0)
+                {
+                    GameEnded?.Invoke(this, new GameEndedEvent
+                    {
+                        Winner = _players.First(p => p.User.Id != expected.User.Id)
+                    });
+                }
             }
+
+            if (!_players.TryDequeue(out var player)) throw new ApplicationException("No players?");
+            player.Roll = roll;
+            _rolls++;
             _players.Enqueue(player);
             if (_rolls % PlayerCount != 0 || PlayerCount <= 2) return player;
             var loser = _players.ToList().OrderBy(p => p.Roll).First();
             KickLoser(loser);
 
             return player;
+        }
+
+        public void Restart()
+        {
+            _players = new Queue<Player>();
+            Limit = 1000;
+            _rolls = 0;
         }
 
         private void KickLoser(Player player)
@@ -74,6 +89,14 @@ namespace Playground
             foreach (var p in players)
             {
                 updatedPlayers.Enqueue(p);
+            }
+
+            if (updatedPlayers.Count == 1)
+            {
+                GameEnded?.Invoke(this, new GameEndedEvent
+                {
+                    Winner = updatedPlayers.First()
+                });
             }
 
             _players = updatedPlayers;
