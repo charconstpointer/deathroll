@@ -18,7 +18,7 @@ namespace Playground
 
         public async Task MainAsync()
         {
-            const string token = "";
+            const string token = "NzMxOTQwMDYwOTcwMzUyNjYx.Xww8GA.NOedeHmkEqHG3B7Ps2cUzVG8M8I";
             var client = await InitClient(token);
             await Task.Delay(-1);
         }

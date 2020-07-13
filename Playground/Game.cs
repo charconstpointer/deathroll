@@ -12,6 +12,8 @@ namespace Playground
         private readonly Random _random;
         private readonly int _limit;
         public IReadOnlyCollection<SocketUser> Players => _players.ToImmutableList();
+        public int PlayerCount => _players.Count;
+        private int _rolls = 0;
 
         public SocketUser Next()
         {
@@ -41,7 +43,12 @@ namespace Playground
             if (expected.Id != user.Id) return (null, 1);
             if (!_players.TryDequeue(out var player)) throw new ApplicationException("No players?");
             var roll = _random.Next(_limit);
+            _rolls++;
             _players.Enqueue(player);
+            if (_rolls % PlayerCount == 0)
+            {
+                Console.WriteLine("full round");
+            }
             return (player, roll);
         }
 
