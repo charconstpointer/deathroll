@@ -39,9 +39,9 @@ namespace Playground
                     var next = Game.Next();
                     foreach (var gamePlayer in Game.Players)
                     {
-                        players.AppendLine(gamePlayer.Id == next.Id
-                            ? $"👉 {gamePlayer.Username}"
-                            : $"⏳ {gamePlayer.Username}");
+                        players.AppendLine(gamePlayer.User.Id == next.User.Id
+                            ? $"👉 {gamePlayer.User.Username}"
+                            : $"⏳ {gamePlayer.User.Username}");
                     }
 
                     await channel.SendMessageAsync(players.ToString());
@@ -53,22 +53,24 @@ namespace Playground
                         return;
                     }
 
-                    Game.AddPlayer(author);
+                    var player = new Player {User = author, Roll = -1};
+                    Game.AddPlayer(player);
                     await channel.SendMessageAsync($"<@{author.Id}> Added");
                 }
                 else if (arg.Content.ToLower().Contains("roll"))
                 {
-                    var limit = Game.Limit;
-                    var (user, roll) = Game.Roll(author);
-                    if (roll == 0)
-                    {
-                        await channel.SendMessageAsync($"<@{author.Id}> :( przegryw");
-                    }
-                    if (user is null) return;
-                    if (user.Id == author.Id)
+
+                    var player = Game.Roll(author);
+                    if (player is null) return;
+                    if (player.User.Id == author.Id)
                     {
                         await channel.SendMessageAsync($"🎲 (0 - {limit}) <@{author.Id}> {roll}");
                     }
+                    if(player.Roll == 0)
+                    {
+                        await channel.SendMessageAsync($"<@{author.Id}> :( przegryw");
+                    }
+                    var limit = Game.Limit;
                 }
             }
         }
