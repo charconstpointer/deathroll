@@ -58,11 +58,16 @@ namespace Playground
                 }
                 else if (arg.Content.ToLower().Contains("roll"))
                 {
+                    var limit = Game.Limit;
                     var (user, roll) = Game.Roll(author);
+                    if (roll == 0)
+                    {
+                        await channel.SendMessageAsync($"<@{author.Id}> :( przegryw");
+                    }
                     if (user is null) return;
                     if (user.Id == author.Id)
                     {
-                        await channel.SendMessageAsync($"<@{author.Id}> {roll}");
+                        await channel.SendMessageAsync($"🎲 (0 - {limit}) <@{author.Id}> {roll}");
                     }
                 }
             }
