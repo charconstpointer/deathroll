@@ -6,5 +6,7 @@ namespace Playground
     {
         public SocketUser User { get; set; }
         public int Roll { get; set; }
+        
+        
     }
 }

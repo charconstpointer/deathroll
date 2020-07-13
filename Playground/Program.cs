@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Playground.Exceptions;
 
 namespace Playground
 {
@@ -20,6 +21,7 @@ namespace Playground
         {
             const string token = "";
             var client = await InitClient(token);
+            Game.PlayerKicked += (sender, args) => Console.WriteLine($"{args.Player.User.Username} kicked");
             await Task.Delay(-1);
         }
 
@@ -54,23 +56,35 @@ namespace Playground
                     }
 
                     var player = new Player {User = author, Roll = -1};
-                    Game.AddPlayer(player);
-                    await channel.SendMessageAsync($"<@{author.Id}> Added");
+                    var added = Game.AddPlayer(player);
+                    if (added) await channel.SendMessageAsync($"<@{author.Id}> Added");
+                    else await channel.SendMessageAsync($"<@{author.Id}> You are already added, 🤦‍♂️🤦‍♀️");
                 }
                 else if (arg.Content.ToLower().Contains("roll"))
                 {
-
-                    var player = Game.Roll(author);
-                    if (player is null) return;
-                    if (player.User.Id == author.Id)
-                    {
-                        await channel.SendMessageAsync($"🎲 (0 - {limit}) <@{author.Id}> {roll}");
-                    }
-                    if(player.Roll == 0)
-                    {
-                        await channel.SendMessageAsync($"<@{author.Id}> :( przegryw");
-                    }
                     var limit = Game.Limit;
+                    try
+                    {
+                        var player = Game.Roll(author);
+                        if (player is null)
+                        {
+                            await channel.SendMessageAsync($"🥶I tell you this, for when 👉 <@{Game.Next().User.Id}>'s days have come to and end. You, shall be king (🎲)");
+                            return;
+                        }
+                        if (player.User.Id == author.Id)
+                        {
+                            await channel.SendMessageAsync($"🎲 (0 - {limit})\n<@{author.Id}> rolled {player.Roll}\n<@{Game.Next().User.Id}> is next");
+                        }
+
+                        if (player.Roll == 0)
+                        {
+                            await channel.SendMessageAsync($"<@{author.Id}> :( przegryw");
+                        }
+                    }
+                    catch (GameOverException e)
+                    {
+                        await channel.SendMessageAsync($"⛔ 👉 🚪");
+                    }
                 }
             }
         }
