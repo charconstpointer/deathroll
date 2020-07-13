@@ -10,7 +10,7 @@ namespace Playground
 {
     public class Game
     {
-        private readonly Queue<Player> _players;
+        private Queue<Player> _players;
         private readonly Random _random;
         public IReadOnlyCollection<Player> Players => _players.ToImmutableList();
         public int PlayerCount => _players.Count;
@@ -29,7 +29,7 @@ namespace Playground
         {
             _players = new Queue<Player>();
             _random = new Random();
-            Limit = 1000000;
+            Limit = 1000;
         }
 
         public bool AddPlayer(Player socketUser)
@@ -54,7 +54,10 @@ namespace Playground
             var roll = _random.Next(Limit);
             player.Roll = roll;
             _rolls++;
-            Limit = roll;
+            if (PlayerCount <= 2)
+            {
+                Limit = roll;
+            }
             _players.Enqueue(player);
             if (_rolls % PlayerCount != 0 || PlayerCount <= 2) return player;
             var loser = _players.ToList().OrderBy(p => p.Roll).First();
@@ -73,6 +76,7 @@ namespace Playground
                 updatedPlayers.Enqueue(p);
             }
 
+            _players = updatedPlayers;
             PlayerKicked?.Invoke(this, new PlayerKickedEvent
             {
                 Player = player

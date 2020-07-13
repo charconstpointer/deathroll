@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +13,6 @@ namespace Playground
     class Program
     {
         public static Game Game = new Game();
-        public static Random Random = new Random();
 
         public static void Main(string[] args)
             => new Program().MainAsync(args).GetAwaiter().GetResult();
@@ -23,7 +21,11 @@ namespace Playground
         {
             var token = args.First();
             var client = await InitClient(token);
-            Game.PlayerKicked += (sender, args) => Console.WriteLine($"{args.Player.User.Username} kicked");
+            var guild = client.Guilds.First(g => g.Name.ToLower().Contains("base"));
+            var channel = guild.Channels.First(c => c.Name.ToLower().Contains("general"));
+            var channelId = channel.Id;
+            var cc = client.GetChannel(channelId) as IMessageChannel;
+            Game.PlayerKicked += async (sender, args) => await cc.SendMessageAsync($"<@{args.Player.User.Id}> lost 🙀");
             await Task.Delay(-1);
         }
 
@@ -70,12 +72,15 @@ namespace Playground
                         var player = Game.Roll(author);
                         if (player is null)
                         {
-                            await channel.SendMessageAsync($"🥶I tell you this, for when 👉 <@{Game.Next().User.Id}>'s days have come to and end. You, shall be king (🎲)");
+                            await channel.SendMessageAsync(
+                                $"🥶I tell you this, for when 👉 <@{Game.Next().User.Id}>'s days have come to and end. You, shall be king (🎲)");
                             return;
                         }
+
                         if (player.User.Id == author.Id)
                         {
-                            await channel.SendMessageAsync($"🎲 (0 - {limit})\n<@{author.Id}> rolled {player.Roll}\n<@{Game.Next().User.Id}> is next");
+                            await channel.SendMessageAsync(
+                                $"🎲 (0 - {limit})\n<@{author.Id}> rolled {player.Roll}\n<@{Game.Next().User.Id}> is next");
                         }
 
                         if (player.Roll == 0)
@@ -87,6 +92,11 @@ namespace Playground
                     {
                         await channel.SendMessageAsync($"⛔ 👉 🚪");
                     }
+                }
+                else if (arg.Content.ToLower().Contains("rules"))
+                {
+                    await channel.SendMessageAsync(
+                        "🎢 Kazdy z graczy musi wylosowac liczbe za pomoca komendy roll\n🪂 Gracz z najslabszym rollem odpada\n🏁 Gdy zostanie tylko dwoch graczy zaczyna sie faza finalowa, rollujemy az ktos uzyska 0, kazdy roll, ktory jest wiekszy od 0, zmniejsza maksymalna wartosc rolla dla przeciwnika");
                 }
             }
         }
