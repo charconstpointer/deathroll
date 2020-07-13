@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,12 +16,12 @@ namespace Playground
         public static Game Game = new Game();
         public static Random Random = new Random();
 
-        public static void Main()
-            => new Program().MainAsync().GetAwaiter().GetResult();
+        public static void Main(string[] args)
+            => new Program().MainAsync(args).GetAwaiter().GetResult();
 
-        public async Task MainAsync()
+        public async Task MainAsync(IEnumerable<string> args)
         {
-            const string token = "";
+            var token = args.First();
             var client = await InitClient(token);
             Game.PlayerKicked += (sender, args) => Console.WriteLine($"{args.Player.User.Username} kicked");
             await Task.Delay(-1);
