@@ -10,10 +10,12 @@ namespace Playground
     {
         private readonly Queue<Player> _players;
         private readonly Random _random;
-        private readonly int _limit;
         public IReadOnlyCollection<Player> Players => _players.ToImmutableList();
         public int PlayerCount => _players.Count;
         private int _rolls = 0;
+        public int Limit { get; private set; }
+        public IReadOnlyCollection<SocketUser> Players => _players.ToImmutableList();
+
 
         public Player Next()
         {
@@ -25,7 +27,7 @@ namespace Playground
         {
             _players = new Queue<Player>();
             _random = new Random();
-            _limit = 100000;
+            Limit = 1000000;
         }
 
         public void AddPlayer(Player socketUser)
@@ -42,9 +44,11 @@ namespace Playground
             var expected = _players.Peek();
             if (expected.User.Id != user.Id) return null;
             if (!_players.TryDequeue(out var player)) throw new ApplicationException("No players?");
-            var roll = _random.Next(_limit);
+
+            var roll = _random.Next(Limit);
             player.Roll = roll;
             _rolls++;
+            Limit = roll;
             _players.Enqueue(player);
             if (_rolls % PlayerCount == 0)
             {
