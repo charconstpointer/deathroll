@@ -14,7 +14,7 @@ namespace Playground
         private readonly Random _random;
         public IReadOnlyCollection<Player> Players => _players.ToImmutableList();
         public int PlayerCount => _players.Count;
-        private int _rolls = 0;
+        private int _rolls;
         public int Limit { get; private set; }
 
         public Player Next()

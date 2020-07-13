@@ -13,12 +13,12 @@ namespace Playground
 {
     class Program
     {
-        public static Game Game = new Game();
+        private static readonly Game Game = new Game();
 
         public static void Main(string[] args)
-            => new Program().MainAsync(args).GetAwaiter().GetResult();
+            => MainAsync(args).GetAwaiter().GetResult();
 
-        public async Task MainAsync(IEnumerable<string> args)
+        private static async Task MainAsync(IEnumerable<string> args)
         {
             var token = args.First();
             var client = await InitClient(token);
@@ -26,11 +26,13 @@ namespace Playground
             var channel = guild.Channels.First(c => c.Name.ToLower().Contains("general"));
             var channelId = channel.Id;
             var cc = client.GetChannel(channelId) as IMessageChannel;
-            Game.PlayerKicked += async (sender, args) => await cc.SendMessageAsync($"<@{args.Player.User.Id}> lost 🙀");
+            if (cc is null) throw new ApplicationException($"Can't get #{channelId} channel");
+            Game.PlayerKicked += async (sender, playerKickedEvent) =>
+                await cc.SendMessageAsync($"<@{playerKickedEvent.Player.User.Id}> lost 🙀");
 
-            async void OnGameOnGameEnded(object? sender, GameEndedEvent args) 
+            async void OnGameOnGameEnded(object sender, GameEndedEvent gameEndedEvent)
             {
-                await cc.SendMessageAsync($"<@{args.Winner.User.Id}> is da winna 🎆🎇🎈✨🎉🎊");
+                await cc.SendMessageAsync($"<@{gameEndedEvent.Winner.User.Id}> is da winna 🎆🎇🎈✨🎉🎊");
                 Game.Restart();
             }
 
@@ -38,12 +40,10 @@ namespace Playground
             await Task.Delay(-1);
         }
 
-
         private static async Task ClientOnMessageReceived(SocketMessage arg, DiscordSocketClient client)
         {
-            var mentioned = arg.MentionedUsers.Any(u => u.Id == client.CurrentUser.Id);
+            var mentioned = VerifyReceiver(arg, client.CurrentUser.Id);
             var author = arg.Author;
-            if (author.Id == client.CurrentUser.Id) return;
             var channelId = arg.Channel.Id;
             if (!(client.GetChannel(channelId) is IMessageChannel channel)) return;
             if (mentioned)
@@ -110,6 +110,13 @@ namespace Playground
             }
         }
 
+        private static bool VerifyReceiver(SocketMessage message, ulong clientId)
+        {
+            var mentioned = message.MentionedUsers.Any(u => u.Id == clientId);
+            var ownMessage = message.Author.Id == clientId;
+            return mentioned && !ownMessage;
+        }
+
         private static Task Log(LogMessage message)
         {
             switch (message.Severity)
@@ -138,25 +145,7 @@ namespace Playground
             return Task.CompletedTask;
         }
 
-        private static IMessageChannel GetChannel(DiscordSocketClient client)
-        {
-            var guild = client.Guilds.FirstOrDefault(g => g.Name.ToLower().Contains("base"));
-            if (guild is null)
-            {
-                return null;
-            }
-
-            var channel = guild.Channels.Single(guildChannel => guildChannel.Name == "bot");
-            var channelId = channel.Id;
-            if (channelId > 0)
-            {
-                return client.GetChannel(channelId) as IMessageChannel;
-            }
-
-            return null;
-        }
-
-        private async Task<DiscordSocketClient> InitClient(string token)
+        private static async Task<DiscordSocketClient> InitClient(string token)
         {
             var client = new DiscordSocketClient();
             var commands = new CommandService(new CommandServiceConfig
