@@ -50,7 +50,7 @@ namespace Playground
 
             var expected = _players.Peek();
             if (expected.User.Id != user.Id) return null;
-            var roll = _random.Next(Limit);
+            var roll = _random.Next(Limit+1);
             if (PlayerCount <= 2)
             {
                 Limit = roll;
